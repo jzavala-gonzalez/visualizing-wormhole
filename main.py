@@ -26,6 +26,7 @@ out_size = tuple(np.array([2, 1]) * out_scale) # Ratio + pixels
 out_im = Image.new("RGB", out_size, color='#ff00e5') # Crear borrador de imagen final
 
 # Funcion para trasladar una imagen (solo se usa al final)
+# Tomado de: https://coderzcolumn.com/tutorials/python/pillow
 def roll_image(img, roll_type='horizontal', delta = 1):
     x , y = img.size
     if roll_type=='horizontal':
