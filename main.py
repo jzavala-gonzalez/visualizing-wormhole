@@ -17,7 +17,7 @@ print('galaxies', galaxies_im.size, galaxies_im.mode)
 # Choose which one is where
 lower_im = saturn_im
 upper_im = galaxies_im
-out_scale = 2
+out_scale = 1000
 out_size = tuple(np.array([2, 1]) * out_scale) # Ratio + pixels
 
 out_im = Image.new("RGB", out_size, color='#ff00e5')
@@ -66,6 +66,9 @@ n_phi_samples = out_size[0]
 n_theta_samples = out_size[1]
 n_total_samples = n_phi_samples * n_theta_samples
 
+theta_sep = np.pi / n_theta_samples
+phi_sep = np.pi * 2 / n_phi_samples
+
 # print('phi_cs_samples', np.linspace(0, np.pi*2, n_phi_samples, endpoint=False))
 # print('theta_cs_samples', np.linspace(0, np.pi, n_theta_samples, endpoint=False))
 
@@ -73,14 +76,14 @@ n_total_samples = n_phi_samples * n_theta_samples
 
 i = 0
 results = []
-for theta_cs in np.linspace(0, np.pi, n_theta_samples, endpoint=False):
-    for phi_cs in np.linspace(0, np.pi*2, n_phi_samples, endpoint=False):
+for (yidx_cs, theta_cs) in enumerate(np.linspace(0, np.pi, n_theta_samples, endpoint=False)):
+    for (xidx_cs, phi_cs) in enumerate(np.linspace(0, np.pi*2, n_phi_samples, endpoint=False)):
         print('i / total:', i, '/', n_total_samples)
         # Choose 'celestial sphere' angle (must ITERATE this)
         # theta_cs = np.pi * 1/4
         # phi_cs = np.pi * 0
 
-        res = dict(i=i, theta_cs = theta_cs, phi_cs = phi_cs)
+        res = dict(i=i, theta_cs = theta_cs, phi_cs = phi_cs, xidx_cs = xidx_cs, yidx_cs = yidx_cs)
 
         # Unit vector pointing in one direction to sky
         # 'cs' stands for 'celesital sphere' NOT camera
@@ -202,25 +205,27 @@ results = (
         pl.when(pl.col('hemisphere_last') == 'lower')
                 .then( pl.col('phi_pct') * lower_im.size[0] )
                 .otherwise( pl.col('phi_pct') * upper_im.size[0] )
+                .floor()
                 .cast(int)
                 .alias('phi_im_x'),
 
         pl.when(pl.col('hemisphere_last') == 'lower')
                 .then( pl.col('theta_pct') * lower_im.size[1] )
                 .otherwise( pl.col('theta_pct') * upper_im.size[1] )
+                .floor()
                 .cast(int)
                 .alias('theta_im_y'),
 
 
 
-        ((pl.col('phi_cs') / (2*np.pi)) * out_im.size[0])
-        .cast(int)
-        .alias('phi_cs_im_x'),
+        # ((pl.col('phi_cs') / (2*np.pi)) * out_im.size[0])
+        # .cast(int)
+        # .alias('phi_cs_im_x'),
 
         
-        ((pl.col('theta_cs') / np.pi) * out_im.size[1])
-        .cast(int)
-        .alias('theta_cs_im_y'),
+        # ((pl.col('theta_cs') / np.pi) * out_im.size[1])
+        # .cast(int)
+        # .alias('theta_cs_im_y'),
 
 
 
@@ -231,7 +236,8 @@ print(
     results
         .select('theta_last', 'phi_last', 'theta_last_mod', 'phi_last_mod', 'theta_last_fixed', 'phi_last_fixed',
                 'theta_pct', 'phi_pct', 'hemisphere_last',
-                'phi_cs', 'theta_cs', 'phi_cs_im_x', 'theta_cs_im_y',
+                'phi_cs', 'theta_cs', 
+                # 'phi_cs_im_x', 'theta_cs_im_y',
                 'phi_im_x', 'theta_im_y'
                 )
 )
@@ -243,11 +249,11 @@ print('out', out_im.size, out_im.mode)
 print(
     results
         .select([
-            pl.col('phi_cs_im_x').min().alias('phi_cs_im_x_min'),
-            pl.col('phi_cs_im_x').max().alias('phi_cs_im_x_max'),
-            pl.col('theta_cs_im_y').min().alias('theta_cs_im_y_min'),
-            pl.col('theta_cs_im_y').max().alias('theta_cs_im_y_max'),
-            pl.lit(None).alias('spacer'),
+            # pl.col('phi_cs_im_x').min().alias('phi_cs_im_x_min'),
+            # pl.col('phi_cs_im_x').max().alias('phi_cs_im_x_max'),
+            # pl.col('theta_cs_im_y').min().alias('theta_cs_im_y_min'),
+            # pl.col('theta_cs_im_y').max().alias('theta_cs_im_y_max'),
+            # pl.lit(None).alias('spacer'),
             pl.col('phi_im_x').min().alias('phi_im_x_min'),
             pl.col('phi_im_x').max().alias('phi_im_x_max'),
             pl.col('theta_im_y').min().alias('theta_im_y_min'),
@@ -263,8 +269,10 @@ print(
 
 # out_im.show()
 for row in results.iter_rows(named=True):
-    i = row['phi_cs_im_x']
-    j = row['theta_cs_im_y']
+    # i = row['phi_cs_im_x']
+    # j = row['theta_cs_im_y']
+    i = row['xidx_cs']
+    j = row['yidx_cs']
     if row['hemisphere_last'] == 'lower':
         im = lower_im
     else:
