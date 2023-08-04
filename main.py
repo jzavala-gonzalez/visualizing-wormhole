@@ -8,22 +8,10 @@ from PIL import Image
 # Leer imagenes a usar
 saturn_fpath = os.path.join('images', 'InterstellarWormhole_Fig6a-1750x875.jpeg')
 galaxies_fpath = os.path.join('images', 'InterstellarWormhole_Fig10.jpeg')
-
-saturn_im = Image.open(saturn_fpath)
-galaxies_im = Image.open(galaxies_fpath)
-
-print('saturn', saturn_im.size, saturn_im.mode)
-print('galaxies', galaxies_im.size, galaxies_im.mode)
-
-# Elegir cual imagen va arriba y cual abajo del wormhole
-lower_im = saturn_im
-upper_im = galaxies_im
-
-# Elegir tamaño de la imagen final
-out_scale = 100
-out_size = tuple(np.array([2, 1]) * out_scale) # Ratio + pixels
-
-out_im = Image.new("RGB", out_size, color='#ff00e5') # Crear borrador de imagen final
+webb_ring_nebula_fpath = os.path.join('images', 'webb_southern_ring_nebula_4833x4501.png')
+webb_ring_nebula_cropped_fpath = os.path.join('images', 'webb_southern_ring_nebula_cropped_3000x1500.png')
+webb_deep_field_fpath = os.path.join('images', 'webb_deep_field_4537x4630.png')
+webb_stephans_quinquet_fpath = os.path.join('images', 'webb_stephans_quinquet_2000x1917.png')
 
 # Funcion para trasladar una imagen (solo se usa al final)
 # Tomado de: https://coderzcolumn.com/tutorials/python/pillow
@@ -42,6 +30,42 @@ def roll_image(img, roll_type='horizontal', delta = 1):
     img.paste(part2)
     img.paste(part1, box = (x-delta, 0) if roll_type=='horizontal' else (0, y-delta))
     return img
+
+saturn_im = Image.open(saturn_fpath)
+galaxies_im = Image.open(galaxies_fpath)
+webb_ring_nebula_im = Image.open(webb_ring_nebula_fpath)
+webb_ring_nebula_cropped_im = Image.open(webb_ring_nebula_cropped_fpath)
+webb_deep_field_im = Image.open(webb_deep_field_fpath)
+webb_stephans_quinquet_im = Image.open(webb_stephans_quinquet_fpath)
+
+# Trasladar la imagen para ajustar como queda al final
+# webb_ring_nebula_im = roll_image(webb_ring_nebula_im,
+#                                  roll_type='horizontal',
+#                                  delta=int(webb_ring_nebula_im.size[0]*(6/8)))
+webb_ring_nebula_cropped_im = roll_image(webb_ring_nebula_cropped_im,
+                                 roll_type='horizontal',
+                                 delta=int(webb_ring_nebula_cropped_im.size[0]*(3/8)))
+webb_stephans_quinquet_im = roll_image(webb_stephans_quinquet_im,
+                                 roll_type='horizontal',
+                                 delta=int(webb_stephans_quinquet_im.size[0]*(3/8)))
+
+print('saturn', saturn_im.size, saturn_im.mode)
+print('galaxies', galaxies_im.size, galaxies_im.mode)
+print('webb_ring_nebula', webb_ring_nebula_im.size, webb_ring_nebula_im.mode)
+
+# Elegir cual imagen va arriba y cual abajo del wormhole
+# lower_im = webb_ring_nebula_cropped_im
+# upper_im = webb_stephans_quinquet_im
+lower_im = webb_stephans_quinquet_im
+upper_im = webb_ring_nebula_cropped_im
+
+# Elegir tamaño de la imagen final
+out_scale = 1000
+out_size = tuple(np.array([2, 1]) * out_scale) # Ratio + pixels
+
+out_im = Image.new("RGB", out_size, color='#ff00e5') # Crear borrador de imagen final
+
+
 
 # Funcion para obtener r(l)
 def get_r(l):
@@ -260,7 +284,9 @@ for row in results.iter_rows(named=True):
     out_im.putpixel((i, j), im_pixel)
 
 # Trasladar la imagen para que el wormhole quede en el centro
-rolled_out = roll_image(out_im, roll_type='horizontal', delta=out_im.size[0]//2)
+roll_delta = out_im.size[0]//2
+# roll_delta = 0
+rolled_out = roll_image(out_im, roll_type='horizontal', delta=roll_delta)
 rolled_out.show() # Enseñar la imagen final!
 
 
